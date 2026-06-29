@@ -108,12 +108,32 @@ main { max-width: none; }
 
 #caption { color: var(--muted); font-size: 13px; margin-top: 8px; }
 
+.showcard {
+  margin: 0 auto;
+  max-width: 760px;
+  font-size: 22px;
+  line-height: 1.6;
+  background: #11233b;
+  border: 1px solid #2f6db0;
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 22px 26px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
 .transcript {
   margin-top: 20px;
   font-size: 20px;
   background: var(--panel);
   border-radius: 12px;
   padding: 20px 24px;
+}
+
+/* When a content card is showing, the spoken transcript is secondary. */
+#showcard:not(.hidden) + .transcript {
+  font-size: 15px;
+  color: var(--muted);
 }
 
 .pausenote {

@@ -175,6 +175,12 @@ Ollama
 ## Changelog
 
 ### Unreleased
+- **On-screen text for non-diagram segments** — when the narration references an
+  example, scenario, definition, or list that isn't a diagram, the writer now puts
+  that content on a card so you *see* it instead of just hearing "the example from
+  the page."
+- **Content-review flow** — after a question pause, pressing **Play** continues to
+  the next segment (no need to hit ⏭).
 - **More engines** — added **Gemini**, **Grok (xAI)**, and **OpenRouter** as Vision
   and/or Writer options (all OpenAI-compatible). Add the relevant API key to `.env`
   and pick them in the player dropdowns.

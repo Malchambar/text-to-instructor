@@ -35,9 +35,10 @@ _SCHEMA = {
                 "properties": {
                     "speak": {"type": "string"},
                     "image_idx": {"type": ["integer", "null"]},
+                    "show": {"type": "string"},
                     "pause": {"type": "boolean"},
                 },
-                "required": ["speak", "image_idx", "pause"],
+                "required": ["speak", "image_idx", "show", "pause"],
             },
         }
     },

@@ -14,6 +14,7 @@ const els = {
   stage: $("stage"),
   diagram: $("diagram"),
   caption: $("caption"),
+  showcard: $("showcard"),
   transcript: $("transcript"),
   pausenote: $("pausenote"),
   player: $("player"),
@@ -28,6 +29,7 @@ const els = {
 let lesson = null;
 let cur = 0;
 let audioUrls = []; // per-segment audio URL cache (cleared on new lesson / voice change)
+let advanceOnPlay = false; // after a paused (content-review) segment, Play goes to next
 
 // Always return a finite, positive playback rate (the dropdown can be blank).
 function currentSpeed() {
@@ -106,9 +108,11 @@ function diagramFor(seg) {
 async function loadSegment(i, autoplay) {
   if (!lesson || i < 0 || i >= lesson.segments.length) return;
   cur = i;
+  advanceOnPlay = false;
   const seg = lesson.segments[i];
 
   const dia = diagramFor(seg);
+  const show = (seg.show || "").trim();
   if (dia) {
     els.diagram.src = `/diagrams/${dia.png_path}`;
     els.caption.textContent = dia.alt || dia.context || "";
@@ -116,6 +120,14 @@ async function loadSegment(i, autoplay) {
   } else {
     els.diagram.classList.add("hidden");
     els.caption.textContent = "";
+  }
+  // When there's no diagram but the segment has on-screen text (an example,
+  // scenario, definition...), show it as a card so it's visible, not just spoken.
+  if (!dia && show) {
+    els.showcard.textContent = show;
+    els.showcard.classList.remove("hidden");
+  } else {
+    els.showcard.classList.add("hidden");
   }
 
   els.transcript.textContent = seg.speak;
@@ -139,6 +151,12 @@ async function loadSegment(i, autoplay) {
 }
 
 function togglePlay() {
+  // After a content-review pause, Play continues to the next segment.
+  if (advanceOnPlay && els.audio.paused) {
+    advanceOnPlay = false;
+    loadSegment(cur + 1, true);
+    return;
+  }
   if (els.audio.paused) els.audio.play().catch(() => {});
   else els.audio.pause();
 }
@@ -165,9 +183,13 @@ async function changeVoice() {
 }
 
 els.audio.addEventListener("ended", () => {
-  // Roll into the next segment only when auto-advance is on and this isn't a stop.
   const seg = lesson && lesson.segments[cur];
-  if (els.autoadvance.checked && seg && !seg.pause && cur < lesson.segments.length - 1) {
+  if (!seg) return;
+  const hasNext = cur < lesson.segments.length - 1;
+  if (seg.pause && hasNext) {
+    // Content-review question: don't auto-advance; let the next Play continue.
+    advanceOnPlay = true;
+  } else if (els.autoadvance.checked && hasNext) {
     loadSegment(cur + 1, true);
   }
 });

@@ -30,6 +30,7 @@ class Segment(BaseModel):
     idx: int
     speak: str
     image_idx: int | None = None  # index into PageCapture.diagrams
+    show: str = ""  # on-screen text for this segment (example/scenario/definition)
     pause: bool = False  # stop here (e.g. a content review question) — don't auto-advance
     audio_path: str | None = None  # filled in by TTS
 

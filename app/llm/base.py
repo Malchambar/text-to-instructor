@@ -32,6 +32,11 @@ Rules:
 - When a diagram helps, set image_idx to that diagram's number and actively talk the \
 listener through it: name what to look at, trace the flow, point out the key parts.
 - Order segments so diagrams appear right as you discuss them.
+- Give the learner something to SEE in every segment. When there's no diagram but \
+you reference an example, scenario, definition, or key list from the page, copy that \
+content (verbatim or lightly condensed, a few lines) into the "show" field so it \
+appears on screen — never just allude to "the example from the page" without showing \
+it. Leave "show" as an empty string only when the spoken words fully stand alone.
 - This text is READ ALOUD. No markdown, no code fences, no URLs, no bullet symbols, \
 no citations. Spell out acronyms the first time if useful.
 - Be accurate to the page. Don't invent facts or specs.
@@ -43,6 +48,7 @@ Use "pause": false on every other segment.
 
 Return ONLY JSON of this exact shape:
 {"segments": [{"speak": "<spoken text>", "image_idx": <diagram number or null>, \
+"show": "<on-screen text, or empty string>", \
 "pause": <true to stop for a question, otherwise false>}]}"""
 
 
@@ -83,18 +89,20 @@ def parse_segments(raw: str) -> list[Segment]:
         pause = False
         if isinstance(item, str):
             speak, image_idx = item.strip(), None
+            show = ""
         elif isinstance(item, dict):
             speak = (item.get("speak") or item.get("text") or "").strip()
             image_idx = item.get("image_idx")
             if not isinstance(image_idx, int):
                 image_idx = None
+            show = (item.get("show") or "").strip()
             pause = bool(item.get("pause"))
         else:
             continue
         if not speak:
             continue
         segments.append(
-            Segment(idx=len(segments), speak=speak, image_idx=image_idx, pause=pause)
+            Segment(idx=len(segments), speak=speak, image_idx=image_idx, show=show, pause=pause)
         )
     if not segments:
         raise ValueError(f"Model returned no usable segments. Got: {raw[:200]}")
