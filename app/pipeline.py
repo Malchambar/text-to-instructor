@@ -11,6 +11,13 @@ from app.models import Lesson
 
 _OFF = {"off", "none", ""}
 
+# The most recently captured page, kept as reference context for the chat panel.
+_last_context: dict | None = None
+
+
+def last_context() -> dict | None:
+    return _last_context
+
 
 def _clear_diagrams() -> None:
     for f in DIAGRAMS_DIR.glob("*.png"):
@@ -50,6 +57,17 @@ async def build_lesson(vision: str | None = None, writer: str | None = None) -> 
     else:
         await describe_diagrams(vision, capture.diagrams)
         segments = await brain.generate_segments(capture, use_images=False)
+
+    global _last_context
+    _last_context = {
+        "title": capture.title,
+        "url": capture.url,
+        "text": capture.text,
+        "diagrams": [
+            {"idx": d.idx, "desc": d.description or d.alt or d.context or ""}
+            for d in capture.diagrams
+        ],
+    }
 
     return Lesson(
         url=capture.url,

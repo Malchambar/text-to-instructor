@@ -101,6 +101,26 @@ async def revoice(req: RevoiceRequest) -> dict:
     return {"ok": True, "voice": _current_voice}
 
 
+class ChatRequest(BaseModel):
+    messages: list[dict]
+    engine: str | None = None
+    web: bool = False
+
+
+@app.post("/api/chat")
+async def chat_endpoint(req: ChatRequest) -> dict:
+    """Answer a question about the current page (optionally searching the web)."""
+    from app.llm.chat import chat
+    from app.pipeline import last_context
+
+    engine = req.engine or settings.writer_provider or "codex"
+    try:
+        reply = await chat(engine, req.messages, req.web, last_context())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}") from e
+    return {"reply": reply}
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")

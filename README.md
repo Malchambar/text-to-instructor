@@ -24,6 +24,7 @@ text-to-speech too monotonous to focus on.
 - ⚡ **Lazy audio:** playback starts as soon as the first segment is ready; the rest render in the background
 - 🔒 **Local-first:** captured content stays on your machine (fully offline with Ollama)
 - ⏯️ Player controls: play/pause (spacebar), prev/next, speed (live), auto-advance toggle
+- 💬 **Built-in chat** — ask questions about the current page (it's given as context); optional **web search** via Claude Code / Codex; the thread **persists as you move through the course**
 
 ## How it works
 
@@ -115,6 +116,14 @@ cp .env.example .env   # then set VISION_PROVIDER / WRITER_PROVIDER to engines y
 - **Content review questions** — playback stops and shows a banner; answer it in
   Cisco, then press ⏭ to continue.
 
+### Chat panel
+The panel on the right lets you ask questions about the page you're studying — it's
+given the page text and diagram descriptions as context. Pick its engine, and flip
+the **🌐** toggle to let **Claude Code** or **Codex** search the web (the API engines
+answer from the page + their own knowledge). The conversation stays put as you move
+through the course; the current page's context updates each time you narrate. **✕**
+clears the thread.
+
 ## Configuration (`.env`)
 
 | Variable | Meaning |
@@ -169,6 +178,10 @@ Ollama
 - **More engines** — added **Gemini**, **Grok (xAI)**, and **OpenRouter** as Vision
   and/or Writer options (all OpenAI-compatible). Add the relevant API key to `.env`
   and pick them in the player dropdowns.
+- **Built-in chat panel** — a persistent side panel to ask questions about the page
+  you're on. Its own engine picker, an optional 🌐 web-search toggle (Claude Code /
+  Codex), page content supplied as context, and the thread persists across pages
+  (saved in the browser).
 
 ### v0.2.0
 - **Split engines** — independent **Vision** (reads diagrams) and **Writer**

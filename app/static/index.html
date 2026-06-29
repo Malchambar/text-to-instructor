@@ -59,27 +59,54 @@
     </div>
   </header>
 
-  <main>
-    <div id="status" class="status"></div>
+  <div class="layout">
+    <main>
+      <div id="status" class="status"></div>
 
-    <section id="stage" class="stage hidden">
-      <figure id="diagram-wrap">
-        <img id="diagram" alt="" />
-        <figcaption id="caption"></figcaption>
-      </figure>
-      <p id="transcript" class="transcript"></p>
-      <p id="pausenote" class="pausenote hidden">⏸ Content review question — answer it in Cisco, then press ⏭ to continue.</p>
-    </section>
+      <section id="stage" class="stage hidden">
+        <figure id="diagram-wrap">
+          <img id="diagram" alt="" />
+          <figcaption id="caption"></figcaption>
+        </figure>
+        <p id="transcript" class="transcript"></p>
+        <p id="pausenote" class="pausenote hidden">⏸ Content review question — answer it in Cisco, then press ⏭ to continue.</p>
+      </section>
 
-    <div id="player" class="player hidden">
-      <button id="prev" title="Previous">⏮</button>
-      <button id="playpause" class="primary" title="Play/Pause">⏸</button>
-      <button id="next" title="Next">⏭</button>
-      <span id="seg-counter" class="seg-counter">0 / 0</span>
-    </div>
-  </main>
+      <div id="player" class="player hidden">
+        <button id="prev" title="Previous">⏮</button>
+        <button id="playpause" class="primary" title="Play/Pause">⏸</button>
+        <button id="next" title="Next">⏭</button>
+        <span id="seg-counter" class="seg-counter">0 / 0</span>
+      </div>
+    </main>
+
+    <aside id="chat" class="chat">
+      <div class="chat-head">
+        <strong>Chat</strong>
+        <select id="chat-engine" title="Chat engine">
+          <option value="codex">Codex</option>
+          <option value="claude_code">Claude</option>
+          <option value="gemini">Gemini</option>
+          <option value="grok">Grok</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="claude">Claude API</option>
+          <option value="ollama">Ollama</option>
+        </select>
+        <label class="toggle" title="Web search (Claude Code / Codex only)">
+          <input type="checkbox" id="chat-web" /> 🌐
+        </label>
+        <button id="chat-clear" title="Clear conversation">✕</button>
+      </div>
+      <div id="chat-log" class="chat-log"></div>
+      <form id="chat-form" class="chat-form">
+        <textarea id="chat-input" rows="2" placeholder="Ask about this page… (Enter to send)"></textarea>
+        <button type="submit" id="chat-send" class="primary">Send</button>
+      </form>
+    </aside>
+  </div>
 
   <audio id="audio" preload="auto"></audio>
   <script src="/static/player.js"></script>
+  <script src="/static/chat.js"></script>
 </body>
 </html>
