@@ -9,10 +9,17 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import re
 
+import numpy as np
 import soundfile as sf
 
 from app.config import AUDIO_DIR, ROOT, settings
+
+# Bumped when synthesis behavior changes, so stale cached audio isn't reused.
+_TTS_VERSION = "2"
+# Kokoro can babble/repeat on long input, so synthesize in chunks this size.
+_CHUNK_CHARS = 320
 
 MODELS_DIR = ROOT / "models"
 MODEL_PATH = MODELS_DIR / "kokoro-v1.0.onnx"
@@ -40,8 +47,46 @@ def _load():
 
 
 def _audio_name(text: str, voice: str, speed: float) -> str:
-    key = f"{voice}|{speed}|{text}".encode()
+    key = f"{_TTS_VERSION}|{voice}|{speed}|{text}".encode()
     return f"seg-{hashlib.sha1(key).hexdigest()[:16]}.wav"
+
+
+def _clean(text: str) -> str:
+    """Make text speakable: turn arrows/symbols into words, drop odd characters."""
+    text = text.replace("->", " to ").replace("→", " to ").replace("—", ", ")
+    text = re.sub(r"[*_`#>|]", " ", text)  # markdown leftovers
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _chunk(text: str, max_chars: int = _CHUNK_CHARS) -> list[str]:
+    """Split into sentence-sized pieces so Kokoro never gets a long passage."""
+    pieces = re.split(r"(?<=[.!?;:])\s+", text)
+    chunks: list[str] = []
+    cur = ""
+    for p in pieces:
+        p = p.strip()
+        if not p:
+            continue
+        if len(p) > max_chars:  # very long sentence: break on commas
+            for sub in re.split(r"(?<=,)\s+", p):
+                sub = sub.strip()
+                if not sub:
+                    continue
+                if len(cur) + len(sub) + 1 <= max_chars:
+                    cur = f"{cur} {sub}".strip()
+                else:
+                    if cur:
+                        chunks.append(cur)
+                    cur = sub
+        elif len(cur) + len(p) + 1 <= max_chars:
+            cur = f"{cur} {p}".strip()
+        else:
+            if cur:
+                chunks.append(cur)
+            cur = p
+    if cur:
+        chunks.append(cur)
+    return chunks or [text]
 
 
 async def synthesize(text: str, voice: str | None = None, speed: float | None = None) -> str:
@@ -55,8 +100,15 @@ async def synthesize(text: str, voice: str | None = None, speed: float | None = 
 
     def work() -> None:
         kokoro = _load()
-        samples, sample_rate = kokoro.create(text, voice=voice, speed=speed, lang="en-us")
-        sf.write(str(out), samples, sample_rate)
+        chunks = _chunk(_clean(text))
+        parts: list[np.ndarray] = []
+        sample_rate = 24000
+        for c in chunks:
+            samples, sample_rate = kokoro.create(c, voice=voice, speed=speed, lang="en-us")
+            parts.append(np.asarray(samples))
+            parts.append(np.zeros(int(sample_rate * 0.12), dtype=parts[-1].dtype))  # gap
+        full = np.concatenate(parts) if parts else np.zeros(1, dtype=np.float32)
+        sf.write(str(out), full, sample_rate)
 
     # Serialize: concurrent prefetches must not run Kokoro at the same time.
     async with _synth_lock:

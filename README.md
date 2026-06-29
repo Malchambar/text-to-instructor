@@ -175,6 +175,9 @@ Ollama
 ## Changelog
 
 ### Unreleased
+- **Fixed garbled/repeating speech on long segments** — Kokoro could babble or
+  hallucinate words on long passages; audio is now synthesized sentence by sentence
+  and stitched together. (Cached audio is regenerated.)
 - **Saved preferences** — your voice, speed, vision/writer engines, and auto-advance
   are written to `data/preferences.json` and restored on restart.
 - **Fixed `/api/segment_audio` 500** — serialized Kokoro so concurrent audio
