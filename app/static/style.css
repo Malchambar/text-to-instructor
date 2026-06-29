@@ -9,21 +9,25 @@
 
 * { box-sizing: border-box; }
 
+html, body { height: 100%; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--fg);
   line-height: 1.5;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* the page itself never scrolls; inner panels do */
 }
 
 header {
   padding: 16px 24px;
   border-bottom: 1px solid #222b38;
   background: var(--panel);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 header h1 { margin: 0 0 12px; font-size: 18px; }
@@ -56,10 +60,10 @@ select, button {
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.layout { display: flex; align-items: stretch; min-height: calc(100vh - 92px); }
-main { flex: 1; min-width: 0; padding: 24px; }
+.layout { display: flex; align-items: stretch; flex: 1; min-height: 0; }
+main { flex: 1; min-width: 0; padding: 24px; overflow-y: auto; }
 
-/* Chat panel — persists across page changes */
+/* Chat panel — persists across page changes; fills the column, log scrolls inside */
 .chat {
   width: 380px;
   flex-shrink: 0;
@@ -67,9 +71,7 @@ main { flex: 1; min-width: 0; padding: 24px; }
   background: var(--panel);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 92px;
-  height: calc(100vh - 92px);
+  min-height: 0;
 }
 .chat-head {
   display: flex;
@@ -81,7 +83,8 @@ main { flex: 1; min-width: 0; padding: 24px; }
 .chat-head strong { margin-right: auto; }
 .chat-head select { padding: 4px 6px; font-size: 12px; }
 .chat-head .toggle { color: var(--muted); font-size: 13px; }
-.chat-log { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.chat-log { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.chat-form { flex-shrink: 0; }
 .msg { padding: 10px 12px; border-radius: 10px; max-width: 92%; white-space: pre-wrap; line-height: 1.45; }
 .msg.user { align-self: flex-end; background: var(--accent); color: #fff; }
 .msg.assistant { align-self: flex-start; background: #0d1117; border: 1px solid #30363d; }
