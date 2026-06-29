@@ -175,6 +175,11 @@ Ollama
 ## Changelog
 
 ### Unreleased
+- **Saved preferences** — your voice, speed, vision/writer engines, and auto-advance
+  are written to `data/preferences.json` and restored on restart.
+- **Fixed `/api/segment_audio` 500** — serialized Kokoro so concurrent audio
+  prefetches no longer collide.
+- **Favicon** — added an inline icon (no more 404 noise in the terminal).
 - **On-screen text for non-diagram segments** — when the narration references an
   example, scenario, definition, or list that isn't a diagram, the writer now puts
   that content on a card so you *see* it instead of just hearing "the example from

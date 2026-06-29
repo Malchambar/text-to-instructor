@@ -101,6 +101,28 @@ async def revoice(req: RevoiceRequest) -> dict:
     return {"ok": True, "voice": _current_voice}
 
 
+@app.get("/api/preferences")
+def get_preferences() -> dict:
+    from app.prefs import load
+
+    return load()
+
+
+class PrefsRequest(BaseModel):
+    voice: str | None = None
+    speed: float | None = None
+    vision: str | None = None
+    writer: str | None = None
+    auto_advance: bool | None = None
+
+
+@app.post("/api/preferences")
+def save_preferences(req: PrefsRequest) -> dict:
+    from app.prefs import save
+
+    return save(req.model_dump(exclude_none=True))
+
+
 class ChatRequest(BaseModel):
     messages: list[dict]
     engine: str | None = None

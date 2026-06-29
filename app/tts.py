@@ -25,6 +25,7 @@ _MODEL_HELP = (
 )
 
 _kokoro = None  # lazily loaded singleton (model load is a few seconds)
+_synth_lock = asyncio.Lock()  # Kokoro isn't thread-safe; serialize synthesis
 
 
 def _load():
@@ -57,5 +58,9 @@ async def synthesize(text: str, voice: str | None = None, speed: float | None = 
         samples, sample_rate = kokoro.create(text, voice=voice, speed=speed, lang="en-us")
         sf.write(str(out), samples, sample_rate)
 
-    await asyncio.to_thread(work)
+    # Serialize: concurrent prefetches must not run Kokoro at the same time.
+    async with _synth_lock:
+        if out.exists():  # another waiter may have just produced it
+            return name
+        await asyncio.to_thread(work)
     return name

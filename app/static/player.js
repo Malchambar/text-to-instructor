@@ -203,7 +203,28 @@ els.next.addEventListener("click", () => loadSegment(cur + 1, true));
 els.voice.addEventListener("change", changeVoice);
 els.speed.addEventListener("change", () => {
   els.audio.playbackRate = currentSpeed();
+  savePrefs();
 });
+
+// Persist the user's selections to a local file so they survive restarts.
+function savePrefs() {
+  fetch("/api/preferences", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      voice: els.voice.value,
+      speed: currentSpeed(),
+      vision: els.vision.value,
+      writer: els.writer.value,
+      auto_advance: els.autoadvance.checked,
+    }),
+  }).catch(() => {});
+}
+
+els.voice.addEventListener("change", savePrefs);
+els.vision.addEventListener("change", savePrefs);
+els.writer.addEventListener("change", savePrefs);
+els.autoadvance.addEventListener("change", savePrefs);
 
 // Spacebar = play/pause when a lesson is loaded.
 document.addEventListener("keydown", (e) => {
@@ -213,13 +234,14 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Pull defaults from the server settings.
-fetch("/api/settings")
+// Restore the user's saved preferences (falls back to server defaults).
+fetch("/api/preferences")
   .then((r) => r.json())
-  .then((s) => {
-    if (s.tts_voice) els.voice.value = s.tts_voice;
-    if (s.tts_speed) applySpeedDefault(s.tts_speed);
-    if (s.vision_provider) els.vision.value = s.vision_provider;
-    if (s.writer_provider) els.writer.value = s.writer_provider;
+  .then((p) => {
+    if (p.voice) els.voice.value = p.voice;
+    if (p.speed) applySpeedDefault(p.speed);
+    if (p.vision) els.vision.value = p.vision;
+    if (p.writer) els.writer.value = p.writer;
+    if (typeof p.auto_advance === "boolean") els.autoadvance.checked = p.auto_advance;
   })
   .catch(() => {});
