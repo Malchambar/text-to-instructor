@@ -268,45 +268,39 @@ function esc(s) {
   );
 }
 
-// Render a text-only "show" card with light visual structure: a header line
-// ending in ":" becomes a larger title, plain short lines become bullets, and a
-// trailing full sentence (after some structure) becomes an un-bulleted note.
-// Tolerant of "- " / "•" / "*" prefixes the model may or may not add.
+// Render a text-only "show" card with light visual structure. The writer puts a
+// list under a header line ending in ":" and separates any closing summary with
+// a BLANK LINE. So: split into blank-line blocks; in a block, a ":" first line
+// is the title and EVERY other line is a bullet (we don't try to guess which
+// "items" are really sentences — they're all list items). Later blocks are
+// closing notes; a lone sentence with no list stays a plain paragraph.
 function renderShow(text) {
-  const lines = String(text)
-    .split(/\r?\n/)
-    .map((l) => l.trim())
+  const ul = (items) =>
+    "<ul>" + items.map((i) => `<li>${esc(i)}</li>`).join("") + "</ul>";
+  const blocks = String(text)
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
     .filter(Boolean);
   let html = "";
-  let items = [];
-  let hadStructure = false;
-  const flush = () => {
-    if (items.length) {
-      html += "<ul>" + items.map((i) => `<li>${esc(i)}</li>`).join("") + "</ul>";
-      items = [];
-    }
-  };
-  lines.forEach((ln) => {
-    const bullet = /^[-•*]\s+/.test(ln);
-    const clean = ln.replace(/^[-•*]\s+/, "");
-    const isHeader = !bullet && clean.endsWith(":");
-    const isSentence =
-      !bullet && !isHeader && /[.!?]$/.test(clean) && clean.split(/\s+/).length >= 5;
-    if (isHeader) {
-      flush();
-      html += `<div class="show-title">${esc(clean)}</div>`;
-      hadStructure = true;
-    } else if (isSentence) {
-      flush();
-      html += hadStructure
-        ? `<p class="show-note">${esc(clean)}</p>`
-        : `<p class="show-plain">${esc(clean)}</p>`;
+  blocks.forEach((block, bi) => {
+    const lines = block
+      .split(/\r?\n/)
+      .map((l) => l.replace(/^[-•*]\s+/, "").trim())
+      .filter(Boolean);
+    if (!lines.length) return;
+    const header = lines[0].endsWith(":") ? lines[0] : null;
+    const items = header ? lines.slice(1) : lines;
+    if (header) {
+      html += `<div class="show-title">${esc(header)}</div>`;
+      if (items.length) html += ul(items);
+    } else if (bi === 0 && lines.length === 1) {
+      html += `<p class="show-plain">${esc(lines[0])}</p>`;
+    } else if (bi === 0) {
+      html += ul(lines); // first block, multiple lines, no header => a list
     } else {
-      items.push(clean);
-      hadStructure = true;
+      lines.forEach((l) => (html += `<p class="show-note">${esc(l)}</p>`));
     }
   });
-  flush();
   return html || `<p class="show-plain">${esc(text)}</p>`;
 }
 
@@ -328,6 +322,7 @@ async function loadSegment(i, autoplay) {
   } else {
     els.diagram.classList.add("hidden");
     els.caption.textContent = "";
+    if (els.videoOverlay) els.videoOverlay.classList.add("hidden"); // text slide: no video overlay
     // No diagram but on-screen text (example/scenario/definition): show a card.
     if (show) {
       els.showcard.innerHTML = renderShow(show);

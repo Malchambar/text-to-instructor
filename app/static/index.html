@@ -85,14 +85,16 @@
 
       <section id="stage" class="stage hidden">
         <figure id="diagram-wrap">
-          <button id="slide-prev" class="slide-arrow hidden" title="Previous image">‹</button>
-          <img id="diagram" alt="" />
-          <button id="slide-next" class="slide-arrow hidden" title="Next image">›</button>
-          <button id="video-overlay" class="video-overlay hidden"
-                  title="Switch to the source tab to watch this video">
-            <span class="vo-arrow">▶</span>
-            <span class="vo-label">Play in source tab</span>
-          </button>
+          <div class="diagram-box">
+            <button id="slide-prev" class="slide-arrow hidden" title="Previous image">‹</button>
+            <img id="diagram" alt="" />
+            <button id="slide-next" class="slide-arrow hidden" title="Next image">›</button>
+            <button id="video-overlay" class="video-overlay hidden"
+                    title="Switch to the source tab to watch this video">
+              <span class="vo-arrow">▶</span>
+              <span class="vo-label">Play in source tab</span>
+            </button>
+          </div>
           <figcaption id="caption"></figcaption>
           <div id="slide-dots" class="slide-dots hidden"></div>
         </figure>

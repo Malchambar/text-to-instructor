@@ -52,9 +52,14 @@ def _audio_name(text: str, voice: str, speed: float) -> str:
 
 
 def _clean(text: str) -> str:
-    """Make text speakable: turn arrows/symbols into words, drop odd characters."""
+    """Make text speakable: turn arrows/symbols into words, drop odd characters.
+    Acronyms are spaced here (audio only) so the voice spells them out — DNS ->
+    'D N S' — while the on-screen text the model wrote stays clean."""
     text = text.replace("->", " to ").replace("→", " to ").replace("—", ", ")
     text = re.sub(r"[*_`#>|]", " ", text)  # markdown leftovers
+    # Space out short all-caps acronyms (2-4 letters: DNS, IP, TCP, EDR, URL) so
+    # they're read letter-by-letter. Longer all-caps (e.g. TALOS) read as words.
+    text = re.sub(r"\b([A-Z]{2,4})\b", lambda m: " ".join(m.group(1)), text)
     return re.sub(r"\s+", " ", text).strip()
 
 

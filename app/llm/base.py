@@ -49,10 +49,15 @@ you reference an example, scenario, definition, or key list from the page, copy 
 content (verbatim or lightly condensed, a few lines) into the "show" field so it \
 appears on screen — never just allude to "the example from the page" without showing \
 it. Leave "show" as an empty string only when the spoken words fully stand alone. When \
-the "show" content is a list, begin it with a short header line ending in a colon, put \
-each list item on its own line, and end with any summarizing sentence as a final line.
+the "show" content is a list, begin it with a short header line ending in a colon, then \
+put each list item on its own line directly under it with NO blank lines between items \
+(every line under the header is a list item, even if it's a full sentence). If you add \
+a one-line summary of the list, separate it from the items with a single blank line.
 - This text is READ ALOUD. No markdown, no code fences, no URLs, no bullet symbols, \
-no citations. Spell out acronyms the first time if useful.
+no citations. Write acronyms as plain letters with no spaces between them (write DNS, \
+never D N S); you may expand them on first use, e.g. "Domain Name System".
+- End the whole lesson with a short recap segment (image_idx null) that pulls the main \
+takeaways together in 3-5 sentences, so the learner leaves with the big picture.
 - Stay faithful to the material in front of you — don't invent facts, specs, or steps \
 that aren't there — but deliver it as teaching, never as a recap of words on a screen.
 - If the page carries safety warnings, cautions, legal/code requirements, or "do \
@@ -86,7 +91,8 @@ def _build_step_user_text(capture: PageCapture) -> str:
         "verbatim), faithfully — never skip, merge, reorder, or invent a step. Keep "
         "each segment to 2-4 spoken sentences. Leave image_idx null and show empty: "
         "the app shows each step's own images and a link to it automatically. Still "
-        "surface any safety warnings on a step clearly.",
+        "surface any safety warnings on a step clearly. Do NOT add any extra intro or "
+        "recap segment — output exactly one segment per step, nothing more.",
         "",
         "STEPS:",
     ]
