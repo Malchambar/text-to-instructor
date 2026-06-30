@@ -57,6 +57,7 @@ def _clean(text: str) -> str:
     'D N S' — while the on-screen text the model wrote stays clean."""
     text = text.replace("->", " to ").replace("→", " to ").replace("—", ", ")
     text = re.sub(r"[*_`#>|]", " ", text)  # markdown leftovers
+    text = re.sub(r"(?<=\w)/(?=\w)", " ", text)  # CI/CD -> CI CD (not "slash"), TCP/IP, and/or
     # Space out short all-caps acronyms (2-4 letters: DNS, IP, TCP, EDR, URL) so
     # they're read letter-by-letter. Longer all-caps (e.g. TALOS) read as words.
     text = re.sub(r"\b([A-Z]{2,4})\b", lambda m: " ".join(m.group(1)), text)

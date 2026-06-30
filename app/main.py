@@ -156,6 +156,18 @@ def debug(text: bool = True) -> dict:
     return data
 
 
+@app.get("/api/announce")
+async def announce(
+    text: str = "Your lesson is ready. Press play to begin.", voice: str = ""
+) -> dict:
+    """Synthesize a short spoken cue (in the lesson voice) — used to say the
+    lesson is ready when it finishes while the player tab isn't in focus."""
+    from app import tts
+
+    name = await tts.synthesize(text, voice=voice or _current_voice)
+    return {"audio_path": name}
+
+
 @app.post("/api/open_step")
 async def open_step(req: OpenStepRequest) -> dict:
     """Step Mode: scroll the existing lesson Chrome tab to a step's anchor so the

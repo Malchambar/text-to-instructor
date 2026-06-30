@@ -41,8 +41,18 @@ Just state the facts and walk them through it. \
 Right: "The general process is similar across most units — but the manual for your \
 specific model is what really matters.")
 - Break the explanation into short segments, each 2-5 sentences of natural speech.
+- Match depth to the MATERIAL, not to the number of diagrams. A text-rich section \
+deserves several segments even if it has only one diagram or none — don't stop at one \
+or two segments per diagram. When a section lists multiple risks, impacts, tools, \
+frameworks, or best practices, teach them individually: give each its own short \
+segment (or a tight pair), name the specific tools and standards (e.g. SBOM, SLSA, \
+Trivy, Falco, NIST SSDF), and say why each matters and what it protects against. Never \
+compress a long, dense technical section into one or two broad summary segments. Keep \
+simple sections brief, but give substantial sections the depth to actually teach them.
 - When a diagram helps, set image_idx to that diagram's number and actively talk the \
-listener through it: name what to look at, trace the flow, point out the key parts.
+listener through it: name what to look at, trace the flow, point out the key parts. \
+It is fine for several consecutive segments to reference the same diagram while you \
+work through different parts of a rich section.
 - Order segments so diagrams appear right as you discuss them.
 - Give the learner something to SEE in every segment. When there's no diagram but \
 you reference an example, scenario, definition, or key list from the page, copy that \
@@ -110,7 +120,24 @@ def build_user_text(capture: PageCapture) -> str:
     step-by-step layout when the page captured as an ordered procedure."""
     if capture.steps:
         return _build_step_user_text(capture)
-    lines = [f"PAGE TITLE: {capture.title}", f"URL: {capture.url}", "", "PAGE TEXT:"]
+    # Content-proportional depth target: scale roughly with word count so a long,
+    # dense page becomes a fuller mini-lecture while a short page stays concise.
+    # (This is a soft target — the writer adds pause segments for content-review
+    # questions on top, and should lean richer for technical/list-heavy material.)
+    words = len((capture.text or "").split())
+    lo = max(5, round(words / 170))
+    hi = min(70, max(lo + 4, round(words / 110)))
+    lines = [
+        f"PAGE TITLE: {capture.title}",
+        f"URL: {capture.url}",
+        "",
+        f"DEPTH: this page is about {words} words. Aim for roughly {lo}-{hi} teaching "
+        "segments — more for dense, technical, list-heavy sections, fewer for simple "
+        "ones. Don't pad thin material, but do give substantial sections real depth "
+        "instead of a couple of broad summaries.",
+        "",
+        "PAGE TEXT:",
+    ]
     lines.append(capture.text[:MAX_TEXT_CHARS] or "(no extractable text)")
     if capture.diagrams:
         lines += ["", "DIAGRAMS (refer to these by number in image_idx):"]

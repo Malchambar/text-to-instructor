@@ -190,7 +190,15 @@ async function narrate() {
     // "Save diagrams" export disabled (see index.html); preserved for opt-in builds:
     // els.savediagrams.classList.toggle("hidden", !(lesson.diagrams && lesson.diagrams.length));
     setStatus("Preparing the voice…", false, true);
-    await loadSegment(0, true); // awaits the first segment's audio synthesis
+    // Load the first segment paused. If you're watching this tab, start playing;
+    // if you've switched away (just checking on it), don't hijack — announce
+    // "lesson ready" in the voice and wait for you to come back and press Play.
+    await loadSegment(0, false); // awaits the first segment's audio synthesis
+    if (document.visibilityState === "visible") {
+      els.audio.play().catch(() => {});
+    } else {
+      announceReady();
+    }
     setStatus(`${lesson.title || lesson.url} — ${lesson.segments.length} segments`);
     refreshStorage();
   } catch (e) {
@@ -266,6 +274,21 @@ function esc(s) {
     /[&<>"]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
   );
+}
+
+// Speak a short "lesson ready" cue in the lesson voice (used when the lesson
+// finishes while you're on another tab). Plays on a throwaway audio element so
+// it doesn't disturb segment 1, which stays loaded and paused.
+async function announceReady() {
+  try {
+    const r = await fetch(
+      `/api/announce?voice=${encodeURIComponent(els.voice.value || "")}`
+    );
+    const d = await r.json();
+    if (d.audio_path) new Audio(`/audio/${d.audio_path}`).play().catch(() => {});
+  } catch (e) {
+    /* announcement is best-effort */
+  }
 }
 
 // Render a text-only "show" card with light visual structure. The writer puts a
