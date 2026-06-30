@@ -14,6 +14,19 @@ _OFF = {"off", "none", ""}
 # The most recently captured page, kept as reference context for the chat panel.
 _last_context: dict | None = None
 
+# Coarse build progress, polled by the UI so it can narrate what's happening
+# ("Reading the page…", "Writing the lesson…") instead of a silent wait.
+_progress: dict = {"stage": "idle", "label": ""}
+
+
+def get_progress() -> dict:
+    return dict(_progress)
+
+
+def _set_progress(stage: str, label: str) -> None:
+    _progress["stage"] = stage
+    _progress["label"] = label
+
 
 def last_context() -> dict | None:
     return _last_context
@@ -41,22 +54,32 @@ async def build_lesson(vision: str | None = None, writer: str | None = None) -> 
     fast; playback speed is live in the player, so audio is rendered neutral.
     """
     _clear_diagrams()
+    _set_progress("reading", "Reading the page…")
 
-    capture = await capture_active_tab()
-    if not capture.text and not capture.diagrams:
-        raise ValueError("Nothing to narrate: no readable text or diagrams on this page.")
+    # capture_active_tab raises a diagnostic ValueError if the page yields nothing.
+    try:
+        capture = await capture_active_tab(on_stage=_set_progress)
+    except Exception:
+        _set_progress("idle", "")
+        raise
 
     vision = vision or settings.vision_provider
     writer = writer or settings.writer_provider or settings.llm_provider
     brain = get_provider(writer)
 
     if _norm(vision) in _OFF:
+        _set_progress("writing", "Writing the lesson…")
         segments = await brain.generate_segments(capture, use_images=False)
     elif _norm(vision) == _norm(writer):
+        _set_progress("writing", "Reading the diagrams and writing the lesson…")
         segments = await brain.generate_segments(capture, use_images=True)
     else:
+        _set_progress("vision", f"Looking at {len(capture.diagrams)} diagram(s)…")
         await describe_diagrams(vision, capture.diagrams)
+        _set_progress("writing", "Writing the lesson…")
         segments = await brain.generate_segments(capture, use_images=False)
+
+    _set_progress("done", "")
 
     global _last_context
     _last_context = {

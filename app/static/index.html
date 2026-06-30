@@ -12,6 +12,8 @@
   <header>
     <div class="topbar">
       <h1>Text-to-Instructor</h1>
+      <span id="storage" class="storage"
+            title="Local disk used by this session's generated audio &amp; diagrams — cleared automatically when the app exits"></span>
       <button id="theme" class="icon-btn" title="Toggle light / dark">🌓</button>
     </div>
     <div class="controls-row">
@@ -61,7 +63,12 @@
       <label class="toggle">
         <input type="checkbox" id="autoadvance" checked /> Auto-advance
       </label>
+      <!-- "Save diagrams" export intentionally disabled to avoid retaining the
+           source page's copyrighted images. Preserved (here + /api/diagrams.zip
+           + player.js) so it can be re-enabled for an opt-in client build:
       <button id="savediagrams" class="hidden" title="Save this page's diagrams as a zip">💾 Save diagrams</button>
+      -->
+
     </div>
   </header>
 
@@ -75,16 +82,30 @@
           <figcaption id="caption"></figcaption>
         </figure>
         <div id="showcard" class="showcard hidden"></div>
+
+        <div id="player" class="player">
+          <button id="prev" title="Back (again to go to previous)">⏮</button>
+          <button id="playpause" class="primary" title="Play/Pause">⏸</button>
+          <button id="next" title="Next">⏭</button>
+          <div class="seekwrap">
+            <span id="cur-time" class="time">0:00</span>
+            <input type="range" id="seek" class="seek" min="0" max="100" value="0" step="0.1"
+                   title="Scrub / rewind" aria-label="Seek" />
+            <span id="dur-time" class="time">0:00</span>
+          </div>
+          <span id="seg-counter" class="seg-counter">0 / 0</span>
+        </div>
+
         <p id="transcript" class="transcript"></p>
         <p id="pausenote" class="pausenote hidden">⏸ Content review question — answer it in Cisco, then press ▶ Play to continue.</p>
+        <p id="disclaimer" class="disclaimer">
+          ⚠ AI-generated lesson — a spoken summary of <em>this page's own content</em>,
+          not professional advice and possibly inaccurate or incomplete. Always verify
+          against the original source and follow all safety warnings, codes, and
+          regulations before acting on it.
+        </p>
       </section>
 
-      <div id="player" class="player hidden">
-        <button id="prev" title="Previous">⏮</button>
-        <button id="playpause" class="primary" title="Play/Pause">⏸</button>
-        <button id="next" title="Next">⏭</button>
-        <span id="seg-counter" class="seg-counter">0 / 0</span>
-      </div>
       <p id="hint" class="hint hidden">Space = play / pause (when not typing)</p>
     </main>
 
@@ -103,7 +124,8 @@
         <label class="toggle" title="Web search (Claude Code / Codex only)">
           <input type="checkbox" id="chat-web" /> 🌐
         </label>
-        <button id="chat-clear" title="Clear conversation">✕</button>
+        <button id="chat-save" title="Save this conversation to a file">⤓</button>
+        <button id="chat-clear" title="Clear conversation and start a new one">🗑 New</button>
       </div>
       <div id="chat-log" class="chat-log"></div>
       <form id="chat-form" class="chat-form">

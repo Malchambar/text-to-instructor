@@ -9,6 +9,7 @@ import subprocess
 import sys
 import webbrowser
 import zipfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -17,11 +18,21 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import __version__
-from app.config import AUDIO_DIR, DIAGRAMS_DIR, settings
+from app.config import AUDIO_DIR, DIAGRAMS_DIR, purge_generated, settings, storage_usage
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="Text-to-Instructor", version=__version__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    # On exit, purge all generated / page-derived content (audio, diagrams,
+    # vision descriptions) so nothing source-derived lingers between sessions.
+    # Chat history is client-side and preferences.json is kept on purpose.
+    purge_generated()
+
+
+app = FastAPI(title="Text-to-Instructor", version=__version__, lifespan=lifespan)
 
 # Player assets, plus captured diagrams and generated audio, served straight off disk.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -102,6 +113,26 @@ async def stop() -> dict:
     return {"stopped": True, "killed": killed}
 
 
+@app.get("/api/progress")
+def progress() -> dict:
+    """Current build stage, polled by the UI while a lesson is being prepared."""
+    from app.pipeline import get_progress
+
+    return get_progress()
+
+
+@app.get("/api/storage")
+def storage() -> dict:
+    """How much generated content (audio/diagrams/descriptions) is on disk now.
+    Powers the session storage meter; everything here is cleared on exit."""
+    return storage_usage()
+
+
+# NOTE: The "Save diagrams" export is intentionally disabled in the UI (the
+# button is commented out in index.html / player.js) to avoid retaining the
+# source page's copyrighted images. The implementation is preserved here so it
+# can be re-enabled for an opt-in build (e.g. a client wanting training-PDF
+# export). With no UI entry point, this route is simply never called.
 @app.get("/api/diagrams.zip")
 def diagrams_zip() -> Response:
     """Download the current page's diagrams as a zip, named by their captions."""

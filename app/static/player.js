@@ -21,19 +21,42 @@ const els = {
   prev: $("prev"),
   next: $("next"),
   playpause: $("playpause"),
+  seek: $("seek"),
+  curTime: $("cur-time"),
+  durTime: $("dur-time"),
   segCounter: $("seg-counter"),
   audio: $("audio"),
   autoadvance: $("autoadvance"),
   theme: $("theme"),
-  savediagrams: $("savediagrams"),
+  storage: $("storage"),
   hint: $("hint"),
 };
+
+// Show how much local disk this session's generated audio/diagrams occupy
+// (cleared on exit). Empty when nothing is cached yet.
+async function refreshStorage() {
+  try {
+    const r = await fetch("/api/storage");
+    const d = await r.json();
+    els.storage.textContent = d.files ? `🗄 ${d.human}` : "";
+    els.storage.title = d.files
+      ? `${d.files} file(s) cached locally this session — cleared automatically when the app exits`
+      : "";
+  } catch (e) {}
+}
+refreshStorage();
+setInterval(refreshStorage, 8000);
 
 let lesson = null;
 let cur = 0;
 let audioUrls = []; // per-segment audio URL cache (cleared on new lesson / voice change)
 let advanceOnPlay = false; // after a paused (content-review) segment, Play goes to next
 let narrateController = null; // AbortController while a lesson is being prepared
+let scrubbing = false; // user is dragging the seek bar (don't let timeupdate fight it)
+
+// Back-button: if we're more than this many seconds into the current segment,
+// the first press restarts it; pressing again near the start jumps to the previous.
+const PREV_RESTART_THRESHOLD = 2.5;
 
 const isTyping = (t) =>
   t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT" || t.isContentEditable);
@@ -50,9 +73,59 @@ function applySpeedDefault(v) {
   els.speed.value = match ? match.value : "1.0";
 }
 
-function setStatus(msg, isError = false) {
-  els.status.textContent = msg || "";
+function setStatus(msg, isError = false, loading = false) {
   els.status.classList.toggle("error", isError);
+  els.status.textContent = "";
+  if (loading) {
+    const sp = document.createElement("span");
+    sp.className = "spinner";
+    els.status.appendChild(sp);
+  }
+  els.status.appendChild(document.createTextNode(msg || ""));
+}
+
+// While a lesson is building, poll the server for its current stage and narrate
+// it to the user (Reading the page → Writing the lesson → …).
+let progressTimer = null;
+async function pollProgress() {
+  try {
+    const r = await fetch("/api/progress");
+    const p = await r.json();
+    if (p.label) setStatus(p.label, false, true);
+  } catch (e) {}
+}
+function startProgress() {
+  stopProgress();
+  progressTimer = setInterval(pollProgress, 450);
+}
+function stopProgress() {
+  if (progressTimer) clearInterval(progressTimer);
+  progressTimer = null;
+}
+
+// mm:ss for the seek-bar time labels.
+function fmtTime(s) {
+  if (!Number.isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+// Paint the played portion of the scrub bar (left of the thumb) in the accent colour.
+function paintSeek() {
+  const max = parseFloat(els.seek.max) || 1;
+  const pct = Math.max(0, Math.min(100, (parseFloat(els.seek.value) / max) * 100));
+  els.seek.style.background =
+    `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border-2) ${pct}%, var(--border-2) 100%)`;
+}
+
+// Reset the scrub bar to the start of a fresh segment.
+function resetSeek() {
+  els.seek.value = 0;
+  els.seek.max = 100;
+  els.curTime.textContent = "0:00";
+  els.durTime.textContent = "0:00";
+  paintSeek();
 }
 
 // Render (server-side, cached) and cache the URL for one segment's audio.
@@ -76,7 +149,8 @@ async function narrate() {
   els.narrate.textContent = "■ Stop";
   els.stage.classList.add("hidden");
   els.player.classList.add("hidden");
-  setStatus("Preparing to teach this page — reading it in Chrome and writing the lesson… this can take a moment.");
+  setStatus("Starting…", false, true);
+  startProgress(); // narrate each build stage as the server reports it
 
   try {
     const res = await fetch("/api/narrate", {
@@ -92,21 +166,26 @@ async function narrate() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
 
+    stopProgress();
     lesson = data;
     audioUrls = [];
     if (!lesson.segments || lesson.segments.length === 0) {
       throw new Error("No narration was produced for this page.");
     }
-    setStatus(`${lesson.title || lesson.url} — ${lesson.segments.length} segments`);
     cur = 0;
     els.stage.classList.remove("hidden");
     els.player.classList.remove("hidden");
     els.hint.classList.remove("hidden");
-    els.savediagrams.classList.toggle("hidden", !(lesson.diagrams && lesson.diagrams.length));
-    loadSegment(0, true);
+    // "Save diagrams" export disabled (see index.html); preserved for opt-in builds:
+    // els.savediagrams.classList.toggle("hidden", !(lesson.diagrams && lesson.diagrams.length));
+    setStatus("Preparing the voice…", false, true);
+    await loadSegment(0, true); // awaits the first segment's audio synthesis
+    setStatus(`${lesson.title || lesson.url} — ${lesson.segments.length} segments`);
+    refreshStorage();
   } catch (e) {
     setStatus(e.name === "AbortError" ? "Stopped." : e.message, e.name !== "AbortError");
   } finally {
+    stopProgress();
     narrateController = null;
     els.narrate.textContent = "▶ Teach this page";
   }
@@ -155,6 +234,7 @@ async function loadSegment(i, autoplay) {
   void els.stage.offsetWidth;
   els.stage.classList.add("fade");
   els.segCounter.textContent = `${i + 1} / ${lesson.segments.length}`;
+  resetSeek();
   els.audio.playbackRate = currentSpeed();
 
   try {
@@ -163,6 +243,7 @@ async function loadSegment(i, autoplay) {
     els.audio.src = url;
     els.audio.playbackRate = currentSpeed();
     if (autoplay) els.audio.play().catch(() => {});
+    refreshStorage(); // a new segment's audio was just cached to disk
   } catch (e) {
     setStatus(e.message, true);
   }
@@ -170,6 +251,18 @@ async function loadSegment(i, autoplay) {
   // Warm the next couple of segments.
   prefetch(i + 1);
   prefetch(i + 2);
+}
+
+// Media-player back button: first press restarts the current segment; pressing
+// again while still near the start steps back to the previous segment (which then
+// plays from its start, so rapid presses walk backwards segment by segment).
+function goPrev() {
+  if (cur > 0 && els.audio.currentTime <= PREV_RESTART_THRESHOLD) {
+    loadSegment(cur - 1, true);
+  } else {
+    els.audio.currentTime = 0;
+    if (els.audio.paused) els.audio.play().catch(() => {});
+  }
 }
 
 function togglePlay() {
@@ -218,8 +311,34 @@ els.audio.addEventListener("ended", () => {
 els.audio.addEventListener("play", () => (els.playpause.textContent = "⏸"));
 els.audio.addEventListener("pause", () => (els.playpause.textContent = "▶"));
 
+// Keep the scrub bar and time labels in sync with playback.
+els.audio.addEventListener("loadedmetadata", () => {
+  const d = els.audio.duration;
+  els.seek.max = Number.isFinite(d) && d > 0 ? d : 100;
+  els.durTime.textContent = fmtTime(d);
+  paintSeek();
+});
+els.audio.addEventListener("timeupdate", () => {
+  if (scrubbing) return;
+  els.seek.value = els.audio.currentTime;
+  els.curTime.textContent = fmtTime(els.audio.currentTime);
+  paintSeek();
+});
+
+// Drag to scrub/rewind within the current segment.
+els.seek.addEventListener("input", () => {
+  scrubbing = true;
+  els.curTime.textContent = fmtTime(parseFloat(els.seek.value));
+  paintSeek();
+});
+els.seek.addEventListener("change", () => {
+  els.audio.currentTime = parseFloat(els.seek.value) || 0;
+  scrubbing = false;
+});
+
 els.narrate.addEventListener("click", () => (narrateController ? stopNarrate() : narrate()));
-els.savediagrams.addEventListener("click", () => (window.location.href = "/api/diagrams.zip"));
+// "Save diagrams" export disabled (see index.html); preserved for opt-in builds:
+// els.savediagrams.addEventListener("click", () => (window.location.href = "/api/diagrams.zip"));
 els.playpause.addEventListener("click", togglePlay);
 
 // Light / dark theme toggle (persisted; applied early in <head> to avoid a flash).
@@ -234,7 +353,7 @@ els.theme.addEventListener("click", () => {
   applyThemeIcon();
 });
 applyThemeIcon();
-els.prev.addEventListener("click", () => loadSegment(cur - 1, true));
+els.prev.addEventListener("click", goPrev);
 els.next.addEventListener("click", () => loadSegment(cur + 1, true));
 els.voice.addEventListener("change", changeVoice);
 els.speed.addEventListener("change", () => {

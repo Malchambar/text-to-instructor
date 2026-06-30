@@ -79,3 +79,52 @@ class Settings:
 
 settings = Settings()
 settings.ensure_dirs()
+
+
+# Dirs holding generated / page-derived content (TTS audio, captured diagrams,
+# cached vision descriptions). Everything here is purged on exit so no
+# source-derived material lingers between sessions. (preferences.json sits in
+# DATA_DIR itself and is deliberately kept; chat history lives client-side.)
+_PURGE_DIRS = (DIAGRAMS_DIR, AUDIO_DIR, DESCRIPTIONS_DIR)
+
+
+def _human_size(n: int) -> str:
+    size = float(n)
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if size < 1024 or unit == "TB":
+            return f"{int(size)} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{int(n)} B"
+
+
+def purge_generated() -> int:
+    """Delete all generated/cached content (audio, diagrams, vision descriptions).
+    Returns the number of files removed. Keeps the (empty) dirs + preferences.json."""
+    removed = 0
+    for d in _PURGE_DIRS:
+        if not d.exists():
+            continue
+        for f in d.iterdir():
+            if f.is_file():
+                try:
+                    f.unlink()
+                    removed += 1
+                except OSError:
+                    pass
+    return removed
+
+
+def storage_usage() -> dict:
+    """Bytes + file count of generated content held locally this session."""
+    total = files = 0
+    for d in _PURGE_DIRS:
+        if not d.exists():
+            continue
+        for f in d.iterdir():
+            if f.is_file():
+                try:
+                    total += f.stat().st_size
+                    files += 1
+                except OSError:
+                    pass
+    return {"bytes": total, "files": files, "human": _human_size(total)}

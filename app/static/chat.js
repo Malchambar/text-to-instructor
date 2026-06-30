@@ -11,6 +11,7 @@
   const engineSel = $("chat-engine");
   const webBox = $("chat-web");
   const clearBtn = $("chat-clear");
+  const saveBtn = $("chat-save");
 
   const KEY = "t2i_chat";
   let messages = [];
@@ -95,9 +96,24 @@
   engineSel.addEventListener("change", persist);
   webBox.addEventListener("change", persist);
   clearBtn.addEventListener("click", () => {
+    if (messages.length && !confirm("Clear this conversation and start a new one?")) return;
     messages = [];
     render();
     persist();
+  });
+
+  // Save the conversation to a Markdown file so you keep your own history.
+  saveBtn.addEventListener("click", () => {
+    if (!messages.length) return;
+    const body = messages
+      .map((m) => `**${m.role === "user" ? "You" : "Instructor"}:** ${m.content}`)
+      .join("\n\n");
+    const blob = new Blob([`# Conversation\n\n${body}\n`], { type: "text/markdown" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "conversation.md";
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
 
   render();

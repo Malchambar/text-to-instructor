@@ -16,7 +16,7 @@ from app.proc import run_capture
 CLI_ENGINES = {"claude_code", "codex"}
 
 SYSTEM = (
-    "You are a friendly, sharp tutor helping a network engineer understand the page "
+    "You are a friendly, sharp tutor helping someone understand the page "
     "they're studying. Answer clearly and concisely. Use the page below as your primary "
     "reference; for things beyond it, use your own knowledge (and the web if web search "
     "is enabled). Keep answers focused and practical."
