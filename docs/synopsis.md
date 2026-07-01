@@ -1,54 +1,78 @@
-# Product Synopsis (for naming research)
+# Product Synopsis
 
-**One-liner:** A local, privacy-friendly desktop tool that turns the online course
-page you're reading into an engaging, narrated mini-lecture — with the diagrams
-shown in sync and an AI tutor you can ask questions.
+**Name:** Teach This Page
 
-**The problem:** A lot of technical training (IT certs, security, networking —
-e.g. Cisco U, Palo Alto) is dense *reading* next to static diagrams. Many learners
-(including those with attention/focus challenges) retain far more by **listening and
-looking** than by silently reading. Plain robotic text-to-speech is monotonous and
-loses attention; it also doesn't connect the words to the right picture at the right
+**One-liner:** A local, privacy-friendly tool that turns almost any web page you're
+reading — a course lesson, a repair guide, a recipe, a Wikipedia article, a health
+or safety explainer — into an engaging, narrated mini-lesson, with the page's own
+images shown in sync and an AI tutor you can ask questions.
+
+**The problem:** So much of what we learn online is a wall of *reading* next to
+static pictures — whether it's a Cisco networking module, an iFixit teardown, a
+recipe, or a Wikipedia article on Greek mythology. Many people (including those with
+attention or focus challenges, or who simply prefer it) retain far more by
+**listening and looking** than by silently reading. Plain robotic text-to-speech is
+monotonous and, worse, never connects the words to the right picture at the right
 moment.
 
-**What it does:** With one click on whatever lesson page you already have open in
-your browser, it:
+**What it does:** With one click on whatever page you already have open, it:
 
-1. Reads the page (text + diagrams) directly from your logged-in browser session.
+1. Reads the page — text and images — directly from your own logged-in browser
+   session, so pages behind a login (paid courses, member sites) work fine.
 2. Uses an AI model to write an **instructor-style spoken walkthrough** — teaching
-   the concept, not reading it verbatim.
-3. Renders it in a **natural local voice** and plays it back as a slideshow: each
-   **diagram (or key text/example) appears on screen exactly as it's discussed**.
-4. Pauses at knowledge-check/quiz questions so you can answer them.
-5. Offers a persistent **chat tutor** that knows the current page as context (and can
-   search the web), so you can ask "explain step 4" or "why does this matter."
+   the material, not reading it verbatim.
+3. Plays it in a **natural voice as a slideshow**: each diagram, photo, or key point
+   appears on screen exactly as it's discussed.
+4. Recognizes **step-by-step guides** (repair, cooking, how-to) and narrates them one
+   step at a time — showing that step's photos and offering a link back to the real
+   step on the page.
+5. Pauses at knowledge-check / quiz questions so you can answer them.
+6. Offers a persistent **chat tutor** that knows the current page as context (and can
+   search the web) — ask "explain step 4" or "why does this matter."
 
-**Who it's for:** Self-paced adult learners doing technical/certification training
-online — network/security engineers, IT pros, students — especially people who focus
-better with audio + visual engagement than with reading.
+**What it works on (a few of many):**
 
-**What makes it different (not "just TTS"):** It *teaches* rather than reads; it
-**syncs the visuals to the narration**; it surfaces on-screen text/examples as
-"slides"; it has a context-aware tutor chat; it runs **locally/privately**; and it
-works with your **existing AI subscriptions** (Claude, ChatGPT/Codex) or fully
-offline (local models) — no required cloud service.
+- **Professional & cert training** — Cisco U, CompTIA, AWS, security/networking.
+- **Repair & DIY** — iFixit teardowns, appliance manuals, home-improvement how-tos.
+- **Cooking** — recipes with step photos (AllRecipes, Serious Eats, food blogs).
+- **Crafts & hobbies** — knitting/crochet patterns, woodworking plans, gardening and
+  plant-care guides.
+- **General knowledge & humanities** — Wikipedia (history, art, mythology), museum and
+  reference pages, literature study guides.
+- **Health & safety** — understanding a condition or procedure (Mayo Clinic,
+  MedlinePlus), first-aid and preparedness steps (Ready.gov).
+- **Money & everyday life** — personal-finance and legal explainers (Investopedia,
+  plain-language legal guides).
+- **Academic study** — a biology/chemistry/economics lesson, a textbook chapter, or a
+  research paper.
 
-**How it's used:** Runs on your own machine; opens a clean player in your browser.
-Choose your AI engine and voice; controls for play/pause, speed, auto-advance,
-light/dark; save the page's diagrams for your notes.
+**Who it's for:** Anyone who learns from web pages and would rather *listen and watch*
+than read — students and self-learners, hobbyists and DIYers, home cooks, people doing
+professional or certification prep, and anyone who focuses better (or reads less
+comfortably) with audio + visual engagement.
 
-**Product direction:** Currently tuned for Cisco U; moving to a **general,
-multi-platform learning assistant** via per-platform "templates" (handling quirks
-like lazy-loaded modules, different page layouts, quiz formats) — starting with
-Cisco U and expanding (Palo Alto, Khan Academy, etc.).
+**Not a course library:** it isn't competing with pre-made video courses like
+Professor Messer or Jeremy's IT Lab — those cover a *fixed* curriculum someone chose
+to produce. Teach This Page works on **whatever page is in front of you**, including
+the long tail that will never get a dedicated video: a niche vendor doc, one page of a
+paid course, a product manual, a research paper, a repair guide, a recipe, or a company
+wiki. Its niche is *"there's no video for this, but I still want to learn it by ear."*
 
-**Naming brief:** Want a **general, brandable** name (not Cisco-specific), ideally
-with an available `.com`. Vibe: approachable, learning-focused, hints at audio/
-narration and/or tutoring. Themes explored: "out loud" / "aloud" / "narrate" /
-"tutor" / "course." Avoid collisions with existing brands (e.g. *LearnOutLoud*,
-*Lecturio*, *Lessonly*). Candidate names with **open .com** (as of this writing):
-Tutor Out Loud, Course Out Loud, Class Out Loud, Lesson Out Loud, Course Aloud,
-Lesson Aloud, Learn This Page.
+**What makes it different (not "just TTS"):** it *teaches* rather than reads; it
+**syncs the page's own visuals to the narration**; it turns step-by-step guides into a
+paced, illustrated walkthrough; it surfaces safety notes and warnings from the page; it
+has a context-aware tutor chat; it runs **locally and privately** (nothing about the
+page is retained after you exit); and it works with **your own AI engine** — a
+Claude/ChatGPT subscription, an API key, or a fully-offline local model — with no
+required cloud service.
 
-**Ask:** propose 15–20 strong product names with likely-available `.com` domains,
-each with a one-line rationale, ranked; flag any obvious trademark conflicts.
+**How it's used:** Runs on your own machine and opens a clean player. Pick your AI
+engine and voice; controls for play/pause, speed, auto-advance, a restart button, and
+light/dark. A per-session stats panel shows the models used, tokens, and an estimated
+cost (nothing is billed when you're on your own subscription).
+
+**Product direction:** Started tuned for Cisco U; now a **general, subject-agnostic
+learning companion** that reads arbitrary pages robustly — handling lazy-loaded images,
+ad-heavy layouts, step-by-step guides, and embedded videos. The roadmap explores
+packaging it as a **self-contained desktop app** (its own bundled browser, so you log
+in and browse inside it) for a one-click, bring-your-own-AI-engine install.
