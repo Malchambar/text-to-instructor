@@ -17,7 +17,7 @@ import soundfile as sf
 from app.config import AUDIO_DIR, ROOT, settings
 
 # Bumped when synthesis behavior changes, so stale cached audio isn't reused.
-_TTS_VERSION = "2"
+_TTS_VERSION = "3"  # v3: _SPEAK_FIXES respelling (econ -> "eaconn")
 # Kokoro can babble/repeat on long input, so synthesize in chunks this size.
 _CHUNK_CHARS = 320
 
