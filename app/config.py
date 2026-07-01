@@ -63,6 +63,13 @@ class Settings:
     # (>7 days). Empty = keep the bundled/local rates (no network).
     pricing_url: str = os.getenv("PRICING_URL", "")
 
+    # For the stats card: a CLI/subscription engine (Claude Code, Codex) sends a
+    # big cached agent context on every call, inflating its token counts. This is
+    # the rough fraction of those input tokens a bare API call would actually send
+    # (the rest is agent scaffolding), used to show a realistic "as direct API"
+    # estimate alongside the actual numbers.
+    api_input_factor: float = float(os.getenv("API_INPUT_FACTOR", "0.10"))
+
     # The debugging Chrome (must match scripts/launch-chrome.sh) — the player
     # opens in this profile, not your personal Chrome.
     chrome_app: str = os.getenv(

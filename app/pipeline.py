@@ -74,6 +74,24 @@ def _build_stats(
     out_tok = vision_usage.output_tokens + writer_usage.output_tokens
     cost = round((vision_cost or 0.0) + (writer_cost or 0.0), 6)
 
+    # "As a direct API call" estimate: subscription-CLI engines send a big cached
+    # agent context per call; a bare API call would send only ~api_input_factor of
+    # that input. API/local engines are already bare, so their numbers stand.
+    factor = settings.api_input_factor
+
+    def _api_equiv(provider: str, u: Usage) -> tuple[int, float | None]:
+        api_in = (
+            round(u.input_tokens * factor)
+            if pricing.engine_billing(provider) == "subscription"
+            else u.input_tokens
+        )
+        return api_in, pricing.estimate_cost(provider, u.model, api_in, u.output_tokens)
+
+    v_api_in, v_api_cost = _api_equiv(v_prov, vision_usage)
+    w_api_in, w_api_cost = _api_equiv(w_prov, writer_usage)
+    api_in_tok = v_api_in + w_api_in
+    api_cost = round((v_api_cost or 0.0) + (w_api_cost or 0.0), 6)
+
     used = [p for p in (v_prov, w_prov) if p and p != "off"]
     kinds = {pricing.engine_billing(p) for p in used} or {"local"}
     billing = next(iter(kinds)) if len(kinds) == 1 else "mixed"
@@ -106,6 +124,9 @@ def _build_stats(
         output_tokens=out_tok,
         tokens_estimated=vision_usage.estimated or writer_usage.estimated,
         estimated_cost_usd=(cost if (in_tok or out_tok) else None),
+        api_input_tokens=api_in_tok,
+        api_cost_usd=(api_cost if (in_tok or out_tok) else None),
+        api_input_factor=factor,
         billing=billing,
         cost_note=note,
         built_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),

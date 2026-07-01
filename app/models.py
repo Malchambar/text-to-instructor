@@ -75,6 +75,11 @@ class LessonStats(BaseModel):
     output_tokens: int = 0
     tokens_estimated: bool = False  # token counts are approximate (no engine report)
     estimated_cost_usd: float | None = None
+    # "as a direct API call" estimate: CLI engines inflate input with cached agent
+    # context; this strips that to a realistic bare-API figure (see api_input_factor)
+    api_input_tokens: int = 0
+    api_cost_usd: float | None = None
+    api_input_factor: float = 0.0
     billing: str = ""  # "subscription" | "api" | "local" | "mixed"
     cost_note: str = ""  # human sentence, e.g. "no charge accrued (subscription)"
     built_at: str = ""  # ISO timestamp

@@ -320,6 +320,9 @@ main { flex: 1; min-width: 0; padding: 32px 28px; overflow-y: auto; }
 .stats-total .sr-eng,
 .stats-total .sr-tok,
 .stats-total .sr-cost { padding-top: 6px; border-top: 1px solid var(--border-2); }
+.stats-api .sr-label,
+.stats-api .sr-tok,
+.stats-api .sr-cost { color: var(--muted); font-style: italic; }
 .stats-note { margin-top: 12px; font-size: 12px; font-style: italic; color: var(--muted); }
 
 .transcript {

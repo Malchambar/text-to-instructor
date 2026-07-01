@@ -273,8 +273,20 @@ function renderStats(s) {
       s.writer_cost_usd
     ) +
     row("Total", "", s.input_tokens, s.output_tokens, s.estimated_cost_usd, "stats-total") +
+    row(
+      "≈ if API",
+      "",
+      s.api_input_tokens,
+      s.output_tokens,
+      s.api_cost_usd,
+      "stats-api"
+    ) +
     `</div>` +
-    `<div class="stats-note">${esc(s.cost_note || "")}</div>`
+    `<div class="stats-note">${esc(s.cost_note || "")}</div>` +
+    `<div class="stats-note">≈ if API estimates a bare API call: CLI engines ` +
+    `(Claude Code, Codex) send a large cached agent context you aren't billed ` +
+    `for, so only ~${Math.round((s.api_input_factor || 0) * 100)}% of the input ` +
+    `tokens are counted as your actual content.</div>`
   );
 }
 
