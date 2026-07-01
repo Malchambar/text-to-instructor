@@ -107,11 +107,15 @@ work through different parts of a rich section.
 you reference an example, scenario, definition, or key list from the page, copy that \
 content (verbatim or lightly condensed, a few lines) into the "show" field so it \
 appears on screen — never just allude to "the example from the page" without showing \
-it. Leave "show" as an empty string only when the spoken words fully stand alone. When \
-the "show" content is a list, begin it with a short header line ending in a colon, then \
-put each list item on its own line directly under it with NO blank lines between items \
-(every line under the header is a list item, even if it's a full sentence). If you add \
-a one-line summary of the list, separate it from the items with a single blank line.
+it. Leave "show" as an empty string only when the spoken words fully stand alone. \
+ALWAYS start the "show" text with a short HEADING line — a title for the card, a few \
+words, no ending period (e.g. "Emerging technologies" or "AI-driven security tools"). \
+Then put each list item on its own line directly under it, NO blank lines between items \
+(every line under the heading is an item, even a full sentence). Never emit a card that \
+is only bullets with no heading — if you can't think of a title, the card doesn't need \
+a list. If one topic/list runs across more than one card, repeat its heading on the \
+next card and append " (continued)". If you add a one-line summary of the list, separate \
+it from the items with a single blank line.
 - This text is READ ALOUD. No markdown, no code fences, no URLs, no bullet symbols, \
 no citations. Write acronyms as plain letters with no spaces between them (write DNS, \
 never D N S); you may expand them on first use, e.g. "Domain Name System".
