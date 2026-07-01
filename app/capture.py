@@ -209,12 +209,44 @@ _PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 # fetch. If that variant 404s, the caller falls back to a screenshot.
 _IFIXIT_SMALL = {"thumbnail", "200x150", "standard", "medium"}
 
+# WikiHow serves one image at many widths via a `-<N>px-` token in its /thumb/
+# path; the inline markup usually points at a small (~460px) variant while the
+# page itself displays a larger one via srcset. Bump anything under this up.
+_WIKIHOW_MIN_W = 728
+
 
 def _hires_src(url: str) -> str:
     m = re.match(r"(https://guide-images\.cdn\.ifixit\.com/\S+)\.([a-z0-9]+)$", url)
     if m and m.group(2) in _IFIXIT_SMALL:
         return f"{m.group(1)}.large"
+    if "wikihow.com/images/thumb/" in url:
+        return re.sub(
+            r"-(\d+)px-",
+            lambda mo: f"-{max(int(mo.group(1)), _WIKIHOW_MIN_W)}px-",
+            url,
+        )
     return url
+
+
+async def _fetch_image_bytes(page: Page, url: str) -> bytes | None:
+    """Download image bytes through the authenticated session, preferring a
+    hi-res variant (`_hires_src`) but falling back to the original URL if the
+    upgraded one fails — so guessing a larger size can never drop the image."""
+    candidates = [url]
+    hi = _hires_src(url)
+    if hi != url:
+        candidates.insert(0, hi)
+    for cand in candidates:
+        try:
+            resp = await page.context.request.get(cand, timeout=8000)
+            if not resp.ok:
+                continue
+            body = await resp.body()
+            if body:
+                return body
+        except Exception:
+            continue
+    return None
 
 
 async def _fetch_png(page: Page, src: str) -> bytes | None:
@@ -368,12 +400,8 @@ async def _diagrams_from_html(page: Page, html: str, base_url: str) -> list[Diag
             w = h = 0
         if (w and w < MIN_W) or (h and h < MIN_H):
             continue
-        try:
-            resp = await page.context.request.get(_hires_src(url), timeout=8000)
-            if not resp.ok:
-                continue
-            body = await resp.body()
-        except Exception:
+        body = await _fetch_image_bytes(page, url)
+        if body is None:
             continue  # slow/broken image — skip it, never stall the capture
         ext = _img_ext(body, url)
         if ext is None or len(body) < 3000:  # unknown type or too small to be a diagram
@@ -502,12 +530,8 @@ async def _build_step_diagrams(page: Page, raw: list[dict]) -> tuple[list[Diagra
 
     async def fetch(key: str, url: str) -> None:
         async with sem:
-            try:
-                resp = await page.context.request.get(_hires_src(url), timeout=8000)
-                if not resp.ok:
-                    return
-                body = await resp.body()
-            except Exception:
+            body = await _fetch_image_bytes(page, url)
+            if body is None:
                 return  # slow/broken image — skip, never stall the capture
             ext = _img_ext(body, url)
             if ext is None or len(body) < 3000:
