@@ -1,10 +1,10 @@
-# Text-to-Instructor
+# Teach This Page
 
 > Turn the training page open in your browser into an engaging, spoken mini-lecture — with the diagrams shown in sync.
 
 **Status:** `v0.2.0` · **Alpha** · macOS · Apple Silicon
 
-Text-to-Instructor is a local, privacy-friendly learning companion for people who
+Teach This Page is a local, privacy-friendly learning companion for people who
 retain more by **listening and looking** than by silently reading. It reads the
 page you already have open in Chrome (e.g. Cisco U / u.cisco.com), writes an
 instructor-style walkthrough of the concept, narrates it in a natural local voice,

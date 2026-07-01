@@ -47,11 +47,15 @@ def _looks_like_photo(path) -> bool:
     Returns False ("treat as a diagram, describe it") if Pillow is missing or the
     image can't be read, so we never silently drop a real diagram."""
     try:
+        import warnings
+
         from PIL import Image
     except Exception:
         return False
     try:
-        im = Image.open(path).convert("RGB")
+        with warnings.catch_warnings():  # silence palette/transparency->RGB notices
+            warnings.simplefilter("ignore")
+            im = Image.open(path).convert("RGB")
     except Exception:
         return False
     im.thumbnail((128, 128))

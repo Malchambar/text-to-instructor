@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     purge_generated()
 
 
-app = FastAPI(title="Text-to-Instructor", version=__version__, lifespan=lifespan)
+app = FastAPI(title="Teach This Page", version=__version__, lifespan=lifespan)
 
 # Player assets, plus captured diagrams and generated audio, served straight off disk.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -93,10 +93,15 @@ async def narrate(req: NarrateRequest) -> dict:
             vision=req.vision, writer=req.writer, step_mode=req.step_mode
         )
     except asyncio.CancelledError:
+        # Stop button (or the client disconnecting) — a cooperative cancel, not a
+        # crash. Kill any engine subprocess and return quietly so it doesn't dump a
+        # scary traceback in the logs.
         from app.proc import kill_all
+        from app.pipeline import _set_progress
 
-        kill_all()  # kill any engine subprocess still running
-        raise
+        kill_all()
+        _set_progress("idle", "")
+        return {"stopped": True}
     except ConnectionError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
     except Exception as e:  # surface a readable message to the UI
@@ -304,7 +309,7 @@ def run() -> None:
 
     url = f"http://{settings.host}:{settings.port}/"
     _open_player(url)
-    print(f"Text-to-Instructor running at {url}")
+    print(f"Teach This Page running at {url}")
     uvicorn.run(app, host=settings.host, port=settings.port, log_level="info")
 
 
