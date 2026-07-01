@@ -281,6 +281,8 @@ main { flex: 1; min-width: 0; padding: 32px 28px; overflow-y: auto; }
 .showcard li { margin: 7px 0; }
 .show-note { margin: 14px 0 0; font-size: 19px; font-style: italic; color: var(--muted); }
 .show-plain { margin: 0; }
+/* A full-sentence explanation / definition under a heading (not a bullet). */
+.show-exp { margin: 9px 0 0; line-height: 1.5; }
 
 /* Session-stats card on the final slide */
 .stats-panel {

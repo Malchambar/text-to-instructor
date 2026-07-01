@@ -364,38 +364,49 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-// Render a text-only "show" card with light visual structure. The writer puts a
-// list under a header line ending in ":" and separates any closing summary with
-// a BLANK LINE. So: split into blank-line blocks; in a block, a ":" first line
-// is the title and EVERY other line is a bullet (we don't try to guess which
-// "items" are really sentences — they're all list items). Later blocks are
-// closing notes; a lone sentence with no list stays a plain paragraph.
+// Render a text-only "show" card with light structure. The on-screen text is a
+// short HEADING (first line — usually a plain title, sometimes ending in ":"),
+// then list items, and sometimes full-sentence explanations/definitions. Per
+// blank-line block: promote a short, non-sentence first line to the heading;
+// render short items as bullets and full sentences as explanation lines.
 function renderShow(text) {
-  const ul = (items) =>
-    "<ul>" + items.map((i) => `<li>${esc(i)}</li>`).join("") + "</ul>";
+  const isSentence = (s) => /[.!?]$/.test(s) && s.split(/\s+/).length >= 5;
+  const titleLike = (s) =>
+    !/[.!?]$/.test(s) && s.split(/\s+/).length <= 9 && s.length <= 70;
   const blocks = String(text)
     .split(/\n\s*\n/)
     .map((b) => b.trim())
     .filter(Boolean);
   let html = "";
-  blocks.forEach((block, bi) => {
+  blocks.forEach((block) => {
     const lines = block
       .split(/\r?\n/)
       .map((l) => l.replace(/^[-•*]\s+/, "").trim())
       .filter(Boolean);
     if (!lines.length) return;
-    const header = lines[0].endsWith(":") ? lines[0] : null;
-    const items = header ? lines.slice(1) : lines;
-    if (header) {
-      html += `<div class="show-title">${esc(header)}</div>`;
-      if (items.length) html += ul(items);
-    } else if (bi === 0 && lines.length === 1) {
-      html += `<p class="show-plain">${esc(lines[0])}</p>`;
-    } else if (bi === 0) {
-      html += ul(lines); // first block, multiple lines, no header => a list
-    } else {
-      lines.forEach((l) => (html += `<p class="show-note">${esc(l)}</p>`));
-    }
+    // Heading: an explicit "…:" line, OR a short title-like first line (the
+    // common case — the writer usually omits the colon).
+    const hasHeading =
+      lines[0].endsWith(":") || (lines.length > 1 && titleLike(lines[0]));
+    if (hasHeading) html += `<div class="show-title">${esc(lines[0])}</div>`;
+    const items = hasHeading ? lines.slice(1) : lines;
+    // Group short items into a bullet list; render full sentences as explanations.
+    let bullets = [];
+    const flush = () => {
+      if (bullets.length) {
+        html += "<ul>" + bullets.map((b) => `<li>${esc(b)}</li>`).join("") + "</ul>";
+        bullets = [];
+      }
+    };
+    items.forEach((it) => {
+      if (isSentence(it)) {
+        flush();
+        html += `<p class="show-exp">${esc(it)}</p>`;
+      } else {
+        bullets.push(it);
+      }
+    });
+    flush();
   });
   return html || `<p class="show-plain">${esc(text)}</p>`;
 }
