@@ -185,13 +185,12 @@ main { flex: 1; min-width: 0; padding: 32px 28px; overflow-y: auto; }
 /* Play arrow + label centered over a video poster — sends you to the source tab. */
 .video-overlay {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0; /* fill the image box; flex-center the contents — can't drift to a corner */
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 9px;
   background: transparent;
   border: none;

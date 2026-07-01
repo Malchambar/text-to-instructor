@@ -157,6 +157,15 @@ function prefetch(i) {
 
 async function narrate() {
   narrateController = new AbortController();
+  // Ask for desktop-notification permission now (a user gesture) so we can tell
+  // you the lesson is ready even if you've switched to the source tab.
+  try {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  } catch (e) {
+    /* ignore */
+  }
   els.narrate.textContent = "■ Stop";
   els.stage.classList.add("hidden");
   els.player.classList.add("hidden");
@@ -198,7 +207,7 @@ async function narrate() {
     if (document.visibilityState === "visible") {
       els.audio.play().catch(() => {});
     } else {
-      announceReady();
+      notifyReady();
     }
     setStatus(`${lesson.title || lesson.url} — ${lesson.segments.length} segments`);
     refreshStorage();
@@ -298,20 +307,44 @@ function esc(s) {
   );
 }
 
-// Speak a short "lesson ready" cue in the lesson voice (used when the lesson
-// finishes while you're on another tab). Plays on a throwaway audio element so
-// it doesn't disturb segment 1, which stays loaded and paused.
-async function announceReady() {
+// When the lesson finishes while you're on ANOTHER tab, a hidden tab can't start
+// audio (Chrome blocks it), so surface "ready" with things that DO work in the
+// background: a desktop notification and a tab-title flag. The voice cue is still
+// fired best-effort for when the tab is/has become foreground.
+const _origTitle = document.title;
+
+function notifyReady() {
+  const n = (lesson && lesson.segments && lesson.segments.length) || 0;
+  const body = n
+    ? `${n} segments — switch back and press Play.`
+    : "Switch back and press Play.";
   try {
-    const r = await fetch(
-      `/api/announce?voice=${encodeURIComponent(els.voice.value || "")}`
-    );
-    const d = await r.json();
-    if (d.audio_path) new Audio(`/audio/${d.audio_path}`).play().catch(() => {});
+    if ("Notification" in window && Notification.permission === "granted") {
+      const note = new Notification("🎧 Your lesson is ready", { body, tag: "t2i-ready" });
+      note.onclick = () => {
+        window.focus();
+        note.close();
+      };
+    }
   } catch (e) {
-    /* announcement is best-effort */
+    /* notifications best-effort */
   }
+  document.title = "✅ Lesson ready · " + _origTitle;
+  // Best-effort spoken cue (only actually plays once the tab is foregrounded).
+  fetch(`/api/announce?voice=${encodeURIComponent(els.voice.value || "")}`)
+    .then((r) => r.json())
+    .then((d) => {
+      if (d.audio_path) new Audio(`/audio/${d.audio_path}`).play().catch(() => {});
+    })
+    .catch(() => {});
 }
+
+// Clear the "ready" flag from the tab title once you're back on the tab.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && document.title.startsWith("✅")) {
+    document.title = _origTitle;
+  }
+});
 
 // Render a text-only "show" card with light visual structure. The writer puts a
 // list under a header line ending in ":" and separates any closing summary with
