@@ -156,3 +156,18 @@ def engine_billing(provider: str) -> str:
     if p in ("ollama", "off", ""):
         return "local"
     return "api"
+
+
+# Fraction of a subscription-CLI engine's INPUT tokens that a bare API call would
+# actually send — the rest is cached agent scaffolding you aren't billed for.
+# Claude Code carries a huge tool/system prompt (little is real content); Codex's
+# input is mostly the real page text (only ~20% scaffolding).
+_API_INPUT_FACTOR = {"claude_code": 0.10, "codex": 0.80}
+
+
+def api_input_factor(provider: str) -> float:
+    """Per-engine 'real content' fraction for the "≈ if API" estimate. API/local
+    engines are already bare API calls, so they're unadjusted (1.0)."""
+    if engine_billing(provider) != "subscription":
+        return 1.0
+    return _API_INPUT_FACTOR.get((provider or "").lower(), settings.api_input_factor)

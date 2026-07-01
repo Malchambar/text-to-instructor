@@ -284,9 +284,9 @@ function renderStats(s) {
     `</div>` +
     `<div class="stats-note">${esc(s.cost_note || "")}</div>` +
     `<div class="stats-note">≈ if API estimates a bare API call: CLI engines ` +
-    `(Claude Code, Codex) send a large cached agent context you aren't billed ` +
-    `for, so only ~${Math.round((s.api_input_factor || 0) * 100)}% of the input ` +
-    `tokens are counted as your actual content.</div>`
+    `(Claude Code, Codex) send a large cached agent context you aren't billed for. ` +
+    `That overhead is stripped per engine (Claude Code keeps ~10% of input as real ` +
+    `content, Codex ~80%).</div>`
   );
 }
 
