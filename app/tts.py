@@ -51,6 +51,17 @@ def _audio_name(text: str, voice: str, speed: float) -> str:
     return f"seg-{hashlib.sha1(key).hexdigest()[:16]}.wav"
 
 
+# A few clipped/coined words the espeak phonemizer mis-reads. Respell for AUDIO
+# ONLY (the on-screen text the model wrote is left as-is). Keyed on whole words
+# (\b..\b, case-insensitive) so longer words that merely contain them are safe.
+# Verified via the Kokoro tokenizer: "econ" -> /ˈɛkən/ ("eck-un"), but the AC
+# "Econ mode" label is said "EE-kon"; "eaconn" -> /ˈiːkɑːn/ nails it. ("second",
+# "economy", "reconcile" don't match \becon\b, so they're untouched.)
+_SPEAK_FIXES = {
+    r"\becon\b": "eaconn",
+}
+
+
 def _clean(text: str) -> str:
     """Make text speakable: turn arrows/symbols into words, drop odd characters.
     Acronyms are spaced here (audio only) so the voice spells them out — DNS ->
@@ -58,6 +69,8 @@ def _clean(text: str) -> str:
     text = text.replace("->", " to ").replace("→", " to ").replace("—", ", ")
     text = re.sub(r"[*_`#>|]", " ", text)  # markdown leftovers
     text = re.sub(r"(?<=\w)/(?=\w)", " ", text)  # CI/CD -> CI CD (not "slash"); TCP/IP; and/or
+    for _pat, _rep in _SPEAK_FIXES.items():  # clipped words espeak mis-stresses
+        text = re.sub(_pat, _rep, text, flags=re.I)
     # NOTE: do NOT respell acronyms. The espeak phonemizer already reads them as
     # letters IN CONTEXT ("API" -> "ay pee eye", "DNS" -> "dee en ess", "EDR" ->
     # "ee dee ar"). A manual respelling actually broke this — "ay" phonemizes to
